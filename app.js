@@ -6,6 +6,7 @@ const session = require("express-session");
 const path = require("path");
 const morgan = require("morgan");
 const Router = require("./routes/router.js");
+const err404 = require('./routes/404.js');
 
 //Express App Initialization
 const app = express();
@@ -34,7 +35,7 @@ app.use(morgan("dev"));
 app.set('port', (process.env.PORT || 3000));
 
 app.use("/api/activities", Router);
-
+app.use("/", err404);
 
 //lol teapot
 app.get("/teapot", function(req, res){

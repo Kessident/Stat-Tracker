@@ -2,12 +2,15 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 mongoose.Promise = require('bluebird');
 mongoose.connect("mongodb://localhost:27017/stat-tracker");
+
 let newDate = new Date();
 let defaultDate = newDate.getMonth() + "/" + newDate.getDate() +  "/" + newDate.getFullYear();
+
 const activitySchema = new Schema({
   _id:{type:Number, required:true, default:1},
   name:{type:String, default:"New Activity"},
   createdBy:{type:String, required:true},
+  description:{type:String, default:"Empty Descriptions"},
   stats:[{
     _id:{type:Number, required:true, default:1},
     date:{type:String, default:defaultDate},

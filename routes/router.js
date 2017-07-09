@@ -8,18 +8,22 @@ const BasicStrategy = require('passport-http').BasicStrategy;
 passport.use(new BasicStrategy(
   function (username, password, done) {
     Users.findOne({username:username}).then(function (user) {
-      const userPass = user.password;
-      if (!userPass || userPass !== password)
-      {return done(null, false);}
-      return done(null, username);
+      if (user){
+        const userPass = user.password;
+        if (!userPass || userPass !== password)
+        {return done(null, false);}
+        return done(null, username);
+      } else {
+        return done(null, false);
+      }
     });
   }
 ));
 
-// passport.authenticate('basic',{session:false}),
-router.get("/", function (req,res) {
+router.use(passport.authenticate("basic", {session:false}));
 
-  Activities.find().then(function (data) {
+router.get("/", function (req,res) {
+  Activities.find({createdBy:req.user}).then(function (data) {
     if (data){
       res.setHeader("Content-Type", "application/json");
       res.status(200).json(data);
@@ -33,18 +37,28 @@ router.get("/", function (req,res) {
 });
 
 router.post("/",function(req, res){
-  Activities.find().sort({_id:-1}).limit(1).then(function (foundActivity) {
-    let newId = foundActivity[0]._id + 1;
+  Activities.find({createdBy:req.user}).sort({_id:-1}).limit(1).then(function (foundActivity) {
+    let newId;
+    if (foundActivity){
+      newId = foundActivity[0]._id + 1;
+    } else {
+      newId = 1;
+    }
+
     let newActivity = {
       _id:newId,
       name:req.body.name,
-      createdBy:req.body.createdBy
+      createdBy:req.user
     };
+
+    if (req.body.description){
+      newActivity.description = req.body.description;
+    }
+
     Activities.create(newActivity).then(function (createdActivity) {
       if (createdActivity){
         res.status(201).send("Activity Created Successfully");
       } else {
-        // TODO: Correct error status?
         res.status(500).send("Error creating activity");
       }
     }).catch(function (err) {
@@ -55,31 +69,12 @@ router.post("/",function(req, res){
 });
 
 router.get("/:id", function(req, res){
-  Activities.findOne({id:req.params.id}).then(function (foundActivity) {
+  Activities.findOne({_id:req.params.id, createdBy:req.user}).then(function (foundActivity) {
     if (foundActivity){
-      res.setHeader("Content-Type:", "application/json");
+      res.setHeader("Content-Type", "application/json");
       res.send(foundActivity);
     } else {
       res.status(404).send("Actvity not found");
-    }
-  }).catch(function (error) {
-    console.log(err);
-    res.status(500).send("Server error");
-  });
-});
-
-router.put("/:id", function(req, res){
-  let updatedActivity = {
-    _id : req.params.id,
-    name : req.body.name,
-    createdBy: req.body.createdBy
-  };
-  Activities.replaceOne({_id:updatedActivity.id}, updatedActivity, {returnNewDocument: true})
-  .then(function (updatedActivity) {
-    if (updatedActivity){
-      res.status(202).send("Activity updated");
-    } else {
-      res.status(500).send("Error creating activity");
     }
   }).catch(function (err) {
     console.log(err);
@@ -87,8 +82,40 @@ router.put("/:id", function(req, res){
   });
 });
 
+router.put("/:id", function(req, res){
+  Activity.findOne({_id:req.params.id, createdBy:req.user})
+  .then(function(foundActivity){
+    if (foundActivity){
+      let updatedActivity = {
+        _id : req.params.id,
+        createdBy: req.user,
+        stats: foundActivity.stats
+      };
+
+      if (req.body.description)
+      {updatedActivity.description = req.body.description;}
+      if (req.body.name)
+      {updatedActivity.name = req.body.name;}
+
+      Activities.replaceOne({_id:updatedActivity.id}, updatedActivity, {returnNewDocument: true})
+      .then(function (updatedActivity) {
+        if (updatedActivity){
+          res.status(202).send("Activity updated");
+        } else {
+          res.status(500).send("Error creating activity");
+        }
+      }).catch(function (err) {
+        console.log(err);
+        res.status(500).send("Server error");
+      });
+    } else {
+      res.status(404).send("Activity not found");
+    }
+  });
+});
 router.delete("/:id", function(req, res){
-  Activities.findOneAndDelete({_id:req.params.id}).then(function (activity) {
+  Activities.findOneAndDelete({_id:req.params.id, createdBy:req.user})
+  .then(function (activity) {
     if (activity){
       res.status(200).send("Activity deleted successfully");
     } else {
@@ -105,8 +132,11 @@ router.post("/:id/stats", function(req, res){
     let newDate = new Date();
     req.body.date = newDate.getMonth() + "/" + newDate.getDate() +  "/" + newDate.getFullYear();
   }
+  if (!req.body.amount)
+  {req.body.amount = 0;}
 
-  Activities.findOne({_id:req.params.id}).then(function (activity) {
+  Activities.findOne({_id:req.params.id, createdby:req.user})
+  .then(function (activity) {
     let foundStatIndex;
     for (let i = 0; i < activity.stats.length; i++) {
       if (activity.stats[i].date === req.body.date){
@@ -132,7 +162,6 @@ router.post("/:id/stats", function(req, res){
       }
     }
 
-
     Activities.replaceOne({_id:activity.id}, activity).then(function (status) {
       if (status){
         res.status(201).send("Stat created/updated");
@@ -146,7 +175,8 @@ router.post("/:id/stats", function(req, res){
 });
 
 router.delete("/:id/stats/:statId", function(req, res){
-  Activities.findOne({_id:req.params.id}).then(function (activity) {
+  Activities.findOne({_id:req.params.id,createdBy:req.user})
+  .then(function (activity) {
     for (let i = 0; i < activity.stats.length; i++) {
       if (activity.stats[i]._id === parseInt(req.params.statId)){
         activity.stats.splice(i,1);
@@ -164,8 +194,6 @@ router.delete("/:id/stats/:statId", function(req, res){
     });
   });
 });
-
-
 
 router.get("/*", function(req, res){
   res.status(404).send("Error, requested resource does not exist");

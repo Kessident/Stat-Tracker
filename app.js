@@ -37,10 +37,6 @@ app.set('port', (process.env.PORT || 3000));
 app.use("/api/activities", Router);
 app.use("/", err404);
 
-//lol teapot
-app.get("/teapot", function(req, res){
-  res.status(418).send("418. I'm a Teapot. The requested entity is short and stout");
-});
 app.listen(app.get('port'), function () {
   console.log("server running on localhost:" + app.get('port'));
 });

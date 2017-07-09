@@ -113,6 +113,7 @@ router.put("/:id", function(req, res){
     }
   });
 });
+
 router.delete("/:id", function(req, res){
   Activities.findOneAndDelete({_id:req.params.id, createdBy:req.user})
   .then(function (activity) {
@@ -130,7 +131,7 @@ router.delete("/:id", function(req, res){
 router.post("/:id/stats", function(req, res){
   if (!req.body.date){
     let newDate = new Date();
-    req.body.date = newDate.getMonth() + "/" + newDate.getDate() +  "/" + newDate.getFullYear();
+    req.body.date = (newDate.getMonth() + 1) + "/" + newDate.getDate() +  "/" + newDate.getFullYear();
   }
   if (!req.body.amount)
   {req.body.amount = 0;}

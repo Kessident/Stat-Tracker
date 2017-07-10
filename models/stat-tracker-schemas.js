@@ -10,7 +10,7 @@ const activitySchema = new Schema({
   _id:{type:Number, required:true, default:1},
   name:{type:String, default:"New Activity"},
   createdBy:{type:String, required:true},
-  description:{type:String, default:"Empty Descriptions"},
+  description:{type:String, default:"Empty Description"},
   stats:[{
     _id:{type:Number, required:true, default:1},
     date:{type:String, default:defaultDate},

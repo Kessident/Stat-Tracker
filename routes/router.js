@@ -37,9 +37,10 @@ router.get("/", function (req,res) {
 });
 
 router.post("/",function(req, res){
-  Activities.find({createdBy:req.user}).sort({_id:-1}).limit(1).then(function (foundActivity) {
+  Activities.find().sort({_id:-1}).limit(1)
+  .then(function (foundActivity) {
     let newId;
-    if (foundActivity){
+    if (foundActivity[0]){
       newId = foundActivity[0]._id + 1;
     } else {
       newId = 1;
@@ -83,7 +84,7 @@ router.get("/:id", function(req, res){
 });
 
 router.put("/:id", function(req, res){
-  Activity.findOne({_id:req.params.id, createdBy:req.user})
+  Activities.findOne({_id:req.params.id, createdBy:req.user})
   .then(function(foundActivity){
     if (foundActivity){
       let updatedActivity = {
@@ -97,7 +98,7 @@ router.put("/:id", function(req, res){
       if (req.body.name)
       {updatedActivity.name = req.body.name;}
 
-      Activities.replaceOne({_id:updatedActivity.id}, updatedActivity, {returnNewDocument: true})
+      Activities.replaceOne({_id:updatedActivity._id}, updatedActivity)
       .then(function (updatedActivity) {
         if (updatedActivity){
           res.status(202).send("Activity updated");

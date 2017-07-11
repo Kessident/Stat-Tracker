@@ -5,8 +5,8 @@ const expressValidator = require("express-validator");
 const session = require("express-session");
 const path = require("path");
 const morgan = require("morgan");
-const Router = require("./routes/router.js");
-const err404 = require('./routes/404.js');
+const Router = require("./routes/router");
+const err404 = require('./routes/404');
 
 //Express App Initialization
 const app = express();

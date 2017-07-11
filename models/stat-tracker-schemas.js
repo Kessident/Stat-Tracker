@@ -17,17 +17,14 @@ const activitySchema = new Schema({
     amount:{type:Number, default:0}
   }]
 });
+const Activity = mongoose.model("activities", activitySchema);
 
 const userSchema = new Schema({
   _id:{type: Number, required:true, default:1},
   username:{type:String, required:true},
   password:{type:String, required:true}
 });
-
-
-
 const User = mongoose.model("users", userSchema);
-const Activity = mongoose.model("activities", activitySchema);
 
 module.exports = {
   Activities:Activity,

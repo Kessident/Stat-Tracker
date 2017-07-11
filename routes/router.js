@@ -200,4 +200,5 @@ router.delete("/:id/stats/:statId", function(req, res){
 router.get("/*", function(req, res){
   res.status(404).send("Error, requested resource does not exist");
 });
+
 module.exports = router;
